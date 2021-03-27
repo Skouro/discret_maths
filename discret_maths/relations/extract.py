@@ -4,6 +4,7 @@ from typing import (
     Set,
     Tuple,
 )
+import math
 
 # Third import
 from networkx import DiGraph
@@ -100,3 +101,15 @@ def get_relations(
     nodes = nodes or graph.nodes
 
     return tuple((x, y) for x in nodes for y in nodes if graph.has_edge(x, y))
+
+
+def get_mci(graph: DiGraph, node_x: int, node_y: int) -> Optional[int]:
+    # maxima cuota inferior
+    mci = math.gcd(node_x, node_y)
+    return mci if graph.has_node(mci) else None
+
+
+def get_mcs(graph: DiGraph, node_x: int, node_y: int) -> Optional[int]:
+    # minima cuota superior
+    mci = math.lcm(node_x, node_y)
+    return mci if graph.has_node(mci) else None

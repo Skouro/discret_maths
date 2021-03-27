@@ -4,6 +4,12 @@
 from typing import Optional, Set
 from networkx import DiGraph
 
+# Local imports
+from discret_maths.relations.extract import (
+    get_mci,
+    get_mcs,
+)
+
 
 def is_reflexive(
     graph: DiGraph,
@@ -131,3 +137,10 @@ def is_total_order(
         for y in nodes)
 
     return reflexive and anti_symmetric and transitive and all_relatione
+
+
+def is_latice(graph: DiGraph) -> bool:
+    nodes = graph.nodes
+    return all(
+        get_mcs(graph, x, y) and get_mci(graph, x, y) for x in nodes
+        for y in nodes)
