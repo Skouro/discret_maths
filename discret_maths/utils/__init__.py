@@ -1,5 +1,10 @@
 # Standar imports
-from typing import Any, Optional, Set, Tuple
+from typing import (
+    Any,
+    Optional,
+    Set,
+    Tuple,
+)
 
 
 def calculate_dividers(number: int) -> Set[int]:

@@ -25,11 +25,9 @@ def build_graph(
     def decorator(function: TFun) -> TFun:
         @functools.wraps(function)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
-            print(args)
-            print(kwargs)
             graph = DiGraph()
-            draw_graph(graph, kwargs['domain'])
-            draw_relation(graph, kwargs['relations'])
+            draw_graph(graph, domain or kwargs['domain'])
+            draw_relation(graph, relations or kwargs['relations'])
             kwargs['graph'] = graph
             return function(*args, **kwargs)
 

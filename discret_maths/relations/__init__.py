@@ -1,7 +1,9 @@
 # Standar import
 from typing import (
+    Any,
     Callable,
     Iterator,
+    Optional,
     Set,
     Tuple,
 )
@@ -11,9 +13,12 @@ import yaml
 from networkx import DiGraph
 
 # Local import
+from discret_maths.utils import get_set_combination
 from discret_maths.relations.transform import to_hasse
 from discret_maths.relations.extract import (
     get_inverse,
+    get_mci,
+    get_mcs,
     get_not_symmetric,
     get_not_transitive,
     get_reflexive,
@@ -25,7 +30,6 @@ from discret_maths.relations.check import (
     is_anti_reflexive,
     is_anti_symmetric,
     is_equivalent,
-    is_latice,
     is_not_reflexive,
     is_not_symmetric,
     is_not_transitive,
@@ -37,18 +41,21 @@ from discret_maths.relations.check import (
     is_transitive,
 )
 
-
 STRICT: bool = True
 
 
-def draw_graph(graph: DiGraph, nodes: Set[int]) -> None:
-    for node in nodes:
+def draw_graph(
+    graph: DiGraph,
+    domain: Set[Any],
+    images: Optional[Set[Any]] = None,
+) -> None:
+    for node in domain.union(images or set()):
         graph.add_node(node, label=node)
 
 
 def draw_relation(
     graph: DiGraph,
-    relations: Tuple[Tuple[int, int], ...],
+    relations: Set[Tuple[Any, Any]],
     inverse: bool = False,
 ) -> None:
     for node_x, node_y in relations:
@@ -58,7 +65,7 @@ def draw_relation(
         graph.add_edge(node_x, node_y, color='blue')
 
 
-def relations_to_str(relations: Tuple[Tuple[int, int], ...]) -> str:
+def relations_to_str(relations: Tuple[Tuple[Any, Any], ...]) -> str:
     result = str()
     for node_x, node_y in relations:
         result += f'({node_x}, {node_y}), '
@@ -70,13 +77,20 @@ def generate_relations(
     condition: Callable[[int, int], bool],
     inverse: bool = False,
 ) -> Iterator[Tuple[int, int]]:
-    for node_x in nodes:
-        for node_y in nodes:
-            if condition(node_x, node_y):
-                if inverse:
-                    yield (node_y, node_x)
-                    continue
-                yield (node_x, node_y)
+    for node_x, node_y in get_set_combination(nodes):
+        if condition(node_x, node_y):
+            if inverse:
+                yield (node_y, node_x)
+                continue
+            yield (node_x, node_y)
+
+
+def is_latice(graph: DiGraph) -> bool:
+    nodes = graph.nodes
+
+    return all(
+        get_mcs(graph, x, y) and get_mci(graph, x, y)
+        for x, y in get_set_combination(nodes) if x != y)
 
 
 def generate_report(graph: DiGraph) -> None:
