@@ -8,11 +8,14 @@ authors = ["Diego Restrepo <drestrepo@fluidattacks.com>"]
 python = "^3.9"
 networkx = "^2.5"
 pygraphviz = "^1.7"
+more-itertools = "^8.7.0"
 
 [tool.poetry.dev-dependencies]
 mypy = "^0.812"
 yapf = "^0.31.0"
 prospector = "^1.3.1"
+pytest = "^6.2.2"
+pytest-cov = "^2.11.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
