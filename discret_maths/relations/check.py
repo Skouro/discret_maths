@@ -5,10 +5,7 @@ from typing import Optional, Set
 from networkx import DiGraph
 
 # Local imports
-from discret_maths.relations.extract import (
-    get_mci,
-    get_mcs,
-)
+from discret_maths.utils import get_set_combination
 
 
 def is_reflexive(
@@ -32,6 +29,8 @@ def is_not_reflexive(
     nodes: Optional[Set[int]] = None,
 ) -> bool:
     nodes = nodes or graph.nodes
+    if is_reflexive(graph, nodes):
+        return False
     return any(graph.has_edge(node, node) for node in nodes)
 
 
@@ -41,7 +40,7 @@ def is_symmetric(
 ) -> bool:
     nodes = nodes or graph.nodes
     return all(
-        graph.has_edge(y, x) for x in nodes for y in nodes
+        graph.has_edge(y, x) for x, y in get_set_combination(nodes)
         if x != y and graph.has_edge(x, y))
 
 
@@ -50,8 +49,8 @@ def is_anti_symmetric(
     nodes: Optional[Set[int]] = None,
 ) -> bool:
     nodes = nodes or graph.nodes
-    return all(not graph.has_edge(y, x) for x in nodes for y in nodes if x != y
-               if graph.has_edge(x, y))
+    return all(not graph.has_edge(y, x) for x, y in get_set_combination(nodes)
+               if x != y if graph.has_edge(x, y))
 
 
 def is_not_symmetric(
@@ -64,8 +63,8 @@ def is_not_symmetric(
         return False
 
     return any(
-        graph.has_edge(y, x) for x in nodes for y in nodes if x != y
-        if graph.has_edge(x, y))
+        graph.has_edge(y, x) and graph.has_edge(x, y)
+        for x, y in get_set_combination(nodes) if x != y)
 
 
 def is_transitive(
@@ -74,7 +73,7 @@ def is_transitive(
 ) -> bool:
     nodes = nodes or graph.nodes
     return all(
-        graph.has_edge(x, z) for x in nodes for y in nodes
+        graph.has_edge(x, z) for x, y in get_set_combination(nodes)
         if x != y and graph.has_edge(x, y) for z in graph.adj[y] if y != z)
 
 
@@ -83,7 +82,7 @@ def is_not_transitive(
     nodes: Optional[Set[int]] = None,
 ) -> bool:
     nodes = nodes or graph.nodes
-    return any(not graph.has_edge(x, z) for x in nodes for y in nodes
+    return any(not graph.has_edge(x, z) for x, y in get_set_combination(nodes)
                if x != y and graph.has_edge(x, y) for z in graph.adj[y]
                if y != z)
 
@@ -133,14 +132,7 @@ def is_total_order(
     anti_symmetric = is_anti_symmetric(graph, nodes)
     transitive = is_transitive(graph, nodes)
     all_relatione = all(
-        graph.has_edge(x, y) and graph.has_edge(y, x) for x in nodes
-        for y in nodes)
+        graph.has_edge(x, y) and graph.has_edge(y, x)
+        for x, y in get_set_combination(nodes))
 
     return reflexive and anti_symmetric and transitive and all_relatione
-
-
-def is_latice(graph: DiGraph) -> bool:
-    nodes = graph.nodes
-    return all(
-        get_mcs(graph, x, y) and get_mci(graph, x, y) for x in nodes
-        for y in nodes)
