@@ -145,7 +145,7 @@ def test_get_reflexive(graph: DiGraph):
     relations={(2, 2), (6, 4), (5, 6), (6, 5), (4, 6)},
 )
 def test_get_symmetric(graph: DiGraph):
-    assert extract.get_symmetric(graph) == {((6, 5), (5, 6)), ((4, 6), (6, 4))}
+    assert extract.get_symmetric(graph) == {((5, 6), (6, 5)), ((4, 6), (6, 4))}
 
 
 @build_graph(
@@ -153,7 +153,7 @@ def test_get_symmetric(graph: DiGraph):
     relations={(2, 2), (5, 4), (5, 6), (6, 5), (7, 7)},
 )
 def test_get_not_symmetric(graph: DiGraph):
-    assert extract.get_not_symmetric(graph) == {((6, 5), (5, 6))}
+    assert extract.get_not_symmetric(graph) == {((5, 6), (6, 5))}
 
 
 @build_graph(
@@ -174,10 +174,37 @@ def test_get_not_symmetric(graph: DiGraph):
 )
 def test_get_transitive(graph: DiGraph):
     assert extract.get_transitive(graph) == {
+        ((4, 5), (5, 4), (4, 4)),
         ((4, 5), (5, 6), (4, 6)),
+        ((4, 6), (6, 4), (4, 4)),
         ((4, 6), (6, 5), (4, 5)),
+        ((5, 4), (4, 5), (5, 5)),
         ((5, 4), (4, 6), (5, 6)),
         ((5, 6), (6, 4), (5, 4)),
+        ((5, 6), (6, 5), (5, 5)),
         ((6, 4), (4, 5), (6, 5)),
+        ((6, 4), (4, 6), (6, 6)),
         ((6, 5), (5, 4), (6, 4)),
+        ((6, 5), (5, 6), (6, 6)),
+    }
+
+
+@build_graph(
+    domain={2, 4, 5, 6, 7},
+    relations={
+        (2, 2),
+        (4, 4),
+        (5, 4),
+        (5, 6),
+        (6, 5),
+        (4, 5),
+        (4, 6),
+    },
+)
+def test_get_not_transitive(graph: DiGraph):
+    assert extract.get_not_transitive(graph) == {
+        ((5, 4), (4, 5), (5, 5)),
+        ((5, 6), (6, 5), (5, 5)),
+        ((6, 5), (5, 4), (6, 4)),
+        ((6, 5), (5, 6), (6, 6)),
     }
