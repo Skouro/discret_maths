@@ -18,7 +18,6 @@ from networkx.exception import NetworkXNoPath
 # Local import
 from discret_maths.relations import check
 from discret_maths.utils.logger import LOGGER
-from discret_maths.utils import get_set_combination
 
 # Constants
 STRICT: bool = True
@@ -26,27 +25,24 @@ STRICT: bool = True
 
 def get_reflexive(
     graph: DiGraph,
-    nodes: Optional[Set[int]] = None,
     strict: bool = STRICT,
 ) -> Set[Tuple[int, int]]:
-    nodes = nodes or graph.nodes
-    if strict and not check.is_reflexive(graph, nodes):
+    nodes = graph.nodes
+    if strict and not check.is_reflexive(graph):
         return set()
     return set((node, node) for node in nodes if graph.has_edge(node, node))
 
 
 def get_symmetric(
     graph: DiGraph,
-    nodes: Optional[Set[int]] = None,
     strict: bool = STRICT,
 ) -> Set[Tuple[Tuple[int, int], Tuple[int, int]]]:
-    nodes = nodes or graph.nodes
-    if strict and not check.is_symmetric(graph, nodes):
+    if strict and not check.is_symmetric(graph):
         return set()
 
     result = set()
     analyzed = set()
-    for n_x, n_y in get_set_combination(nodes, nodes):
+    for n_x, n_y in graph.edges:
         if n_x == n_y:
             continue
         if (graph.has_edge(n_x, n_y) and graph.has_edge(n_y, n_x)
@@ -60,61 +56,45 @@ def get_symmetric(
 
 def get_not_symmetric(
     graph: DiGraph,
-    nodes: Optional[Set[int]] = None,
     strict: bool = STRICT,
 ) -> Set[Tuple[Tuple[int, int], Tuple[int, int]]]:
-    nodes = nodes or graph.nodes
-    if strict and not check.is_not_symmetric(graph, nodes):
+    if strict and not check.is_not_symmetric(graph):
         return set()
 
-    return get_symmetric(graph, nodes, False)
+    return get_symmetric(graph, False)
 
 
 def get_transitive(
     graph: DiGraph,
-    nodes: Optional[Set[int]] = None,
     strict: bool = STRICT
 ) -> Set[Tuple[Tuple[int, int], Tuple[int, int], Tuple[int, int]]]:
-    nodes = nodes or graph.nodes
-    if strict and not check.is_transitive(graph, nodes):
+    if strict and not check.is_transitive(graph):
         return set()
 
-    return set(((x, y), (y, z), (x, z)) for x in nodes for y in nodes
+    return set(((x, y), (y, z), (x, z)) for x, y in graph.edges
                if x != y and graph.has_edge(x, y) for z in graph.adj[y]
-               if y != z and graph.has_edge(x, z)
-               if x != z)
+               if y != z and graph.has_edge(x, z))
 
 
 def get_not_transitive(
     graph: DiGraph,
-    nodes: Optional[Set[int]] = None,
     strict: bool = STRICT,
-) -> Tuple[Tuple[Tuple[int, int], Tuple[int, int], Tuple[int, int]], ...]:
-    nodes = nodes or graph.nodes
-    if strict and not check.is_not_transitive(graph, nodes):
-        return tuple()
+) -> Set[Tuple[Tuple[int, int], Tuple[int, int], Tuple[int, int]]]:
+    if strict and not check.is_not_transitive(graph):
+        return set()
 
-    return tuple(((x, y), (y, z), (x, z)) for x in nodes for y in nodes
-                 if x != y and graph.has_edge(x, y) for z in graph.adj[y]
-                 if y != z and not graph.has_edge(x, z))
-
-
-def get_inverse(
-    graph: DiGraph,
-    nodes: Optional[Set[int]] = None,
-) -> Tuple[Tuple[int, int], ...]:
-    nodes = nodes or graph.nodes
-
-    return tuple((y, x) for x in nodes for y in nodes if graph.has_edge(x, y))
+    return set(((x, y), (y, z), (x, z)) for x, y in graph.edges
+               if x != y and graph.has_edge(x, y) for z in graph.adj[y]
+               if y != z and not graph.has_edge(x, z))
 
 
-def get_relations(
-    graph: DiGraph,
-    nodes: Optional[Set[int]] = None,
-) -> Tuple[Tuple[int, int], ...]:
-    nodes = nodes or graph.nodes
+def get_inverse(graph: DiGraph, ) -> Tuple[Tuple[int, int], ...]:
+    return tuple((y, x) for x, y in graph.edges)
 
-    return tuple((x, y) for x in nodes for y in nodes if graph.has_edge(x, y))
+
+def get_relations(graph: DiGraph, ) -> Tuple[Tuple[int, int], ...]:
+
+    return tuple((x, y) for x, y in graph.edges)
 
 
 def math_get_mci(graph: DiGraph, node_x: int, node_y: int) -> Optional[int]:
@@ -166,9 +146,6 @@ def get_ci(graph: DiGraph, node_x: Any, node_y: Any) -> Set[Any]:
     x_pred = set(_recursive_pred(graph, node_x))
     y_pred = set(_recursive_pred(graph, node_y))
     result = x_pred.intersection(y_pred)
-    print(result)
-    print(x_pred)
-    print(y_pred)
     with suppress(NetworkXNoPath):
         if tuple(all_shortest_paths(graph, node_x, node_y)):
             result.add(node_x)
