@@ -18,6 +18,7 @@ from networkx.exception import NetworkXNoPath
 # Local import
 from discret_maths.relations import check
 from discret_maths.utils.logger import LOGGER
+from discret_maths.utils import get_set_combination
 
 # Constants
 STRICT: bool = True
@@ -111,12 +112,16 @@ def math_get_mcs(graph: DiGraph, node_x: int, node_y: int) -> Optional[int]:
 
 def _recursive_pred(graph: DiGraph, node: Any) -> Iterator[Any]:
     for pred in graph.pred[node].keys():
+        if pred == node:
+            continue
         yield pred
-        yield from (_recursive_pred(graph, pred))
+        yield from _recursive_pred(graph, pred)
 
 
 def _recursive_adj(graph: DiGraph, node: Any) -> Iterator[Any]:
     for pred in graph.adj[node].keys():
+        if pred == node:
+            continue
         yield pred
         yield from (_recursive_adj(graph, pred))
 
@@ -130,9 +135,6 @@ def get_cs(graph: DiGraph, node_x: Any, node_y: Any) -> Set[Any]:
     x_adj = set(_recursive_adj(graph, node_x))
     y_adj = set(_recursive_adj(graph, node_y))
     result = x_adj.intersection(y_adj)
-    print(result)
-    print(x_adj)
-    print(y_adj)
     with suppress(NetworkXNoPath):
         if tuple(all_shortest_paths(graph, node_x, node_y)):
             result.add(node_y)
@@ -153,6 +155,16 @@ def get_ci(graph: DiGraph, node_x: Any, node_y: Any) -> Set[Any]:
         if tuple(all_shortest_paths(graph, node_y, node_x)):
             result.add(node_y)
     return result
+
+
+def get_all_cs(graph: DiGraph) -> Iterator[Tuple[Set[Any], Set[Any]]]:
+    for node_x, node_y in get_set_combination(graph.nodes):
+        yield ({node_x, node_y}, get_cs(graph, node_x, node_y))
+
+
+def get_all_ci(graph: DiGraph) -> Iterator[Tuple[Set[Any], Set[Any]]]:
+    for node_x, node_y in get_set_combination(graph.nodes):
+        yield ({node_x, node_y}, get_ci(graph, node_x, node_y))
 
 
 def _get_mci(graph: DiGraph, node_x: Any, node_y: Any) -> Optional[Any]:
@@ -213,6 +225,16 @@ def _get_mcs(graph: DiGraph, node_x: Any, node_y: Any) -> Optional[Any]:
             short_common_adj = [(node, tow_paths_length)]
 
     return {node for node, _ in short_common_adj}
+
+
+def get_all_mci(graph: DiGraph) -> Iterator[Tuple[Set[Any], Any]]:
+    for node_x, node_y in get_set_combination(graph.nodes):
+        yield ({node_x, node_y}, _get_mci(graph, node_x, node_y))
+
+
+def get_all_mcs(graph: DiGraph) -> Iterator[Tuple[Set[Any], Any]]:
+    for node_x, node_y in get_set_combination(graph.nodes):
+        yield ({node_x, node_y}, _get_mcs(graph, node_x, node_y))
 
 
 def get_mci(graph: DiGraph, node_x: Any, node_y: Any) -> Optional[Any]:

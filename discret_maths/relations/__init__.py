@@ -7,15 +7,19 @@ from typing import (
     Set,
     Tuple,
 )
-import yaml
 
 # Third imports
+import oyaml as yaml
 from networkx import DiGraph
 
 # Local import
 from discret_maths.utils import get_set_combination
 from discret_maths.relations.transform import to_hasse
 from discret_maths.relations.extract import (
+    get_all_ci,
+    get_all_cs,
+    get_all_mci,
+    get_all_mcs,
     get_inverse,
     get_mci,
     get_mcs,
@@ -113,6 +117,10 @@ def generate_report(graph: DiGraph) -> None:
             'total_order': is_total_order(graph),
         },
         'relented_nodes': {
+            'relations':
+            list(f'({x}, {y})' for x, y in get_relations(graph)),
+            'inverse':
+            list(f'({x}, {y})' for x, y in get_inverse(graph)),
             'reflexive': [f'({x}, {y})' for x, y in get_reflexive(graph)],
             'symmetry': [
                 f'({a[0]}, {a[1]}), ({b[0]}, {b[1]})'
@@ -130,12 +138,17 @@ def generate_report(graph: DiGraph) -> None:
                 f'({x[0]}, {x[1]}), ({y[0]}, {y[1]}), ({z[0]}, {z[1]})'
                 for x, y, z in get_not_transitive(graph)
             ],
-            'inverse':
-            relations_to_str(get_inverse(graph)),
-            'relations':
-            relations_to_str(get_relations(graph)),
         },
-        'is_latice': latice
+        'is_latice':
+        latice,
+        'lower_cotes':
+        list(f'{nodes}, {cotes}' for nodes, cotes in get_all_ci(graph)),
+        'upper_cotes':
+        list(f'{nodes}, {cotes}' for nodes, cotes in get_all_cs(graph)),
+        'maximun_lower_cotes':
+        list(f'{nodes}, {cotes}' for nodes, cotes in get_all_mci(graph)),
+        'minimum_upper_cotes':
+        list(f'{nodes}, {cotes}' for nodes, cotes in get_all_mcs(graph)),
     }
 
     with open('report.yaml', 'w') as streamer:
