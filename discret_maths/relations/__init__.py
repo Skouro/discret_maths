@@ -20,6 +20,8 @@ from discret_maths.relations.extract import (
     get_all_cs,
     get_all_mci,
     get_all_mcs,
+    get_bounded,
+    get_complements,
     get_inverse,
     get_mci,
     get_mcs,
@@ -33,6 +35,10 @@ from discret_maths.relations.extract import (
 from discret_maths.relations.check import (
     is_anti_reflexive,
     is_anti_symmetric,
+    is_bounded,
+    is_booblean_algebra,
+    is_complemented,
+    is_distributed,
     is_equivalent,
     is_not_reflexive,
     is_not_symmetric,
@@ -89,7 +95,7 @@ def generate_relations(
             yield (node_x, node_y)
 
 
-def is_latice(graph: DiGraph) -> bool:
+def is_lattice(graph: DiGraph) -> bool:
     nodes = graph.nodes
 
     return all(
@@ -99,7 +105,7 @@ def is_latice(graph: DiGraph) -> bool:
 
 def generate_report(graph: DiGraph) -> None:
     hasse_graph = to_hasse(graph)
-    latice = is_latice(hasse_graph)
+    lattice = is_lattice(hasse_graph)
 
     report = {
         'relations_type': {
@@ -139,16 +145,37 @@ def generate_report(graph: DiGraph) -> None:
                 for x, y, z in get_not_transitive(graph)
             ],
         },
-        'is_latice':
-        latice,
-        'lower_cotes':
-        list(f'{nodes}, {cotes}' for nodes, cotes in get_all_ci(graph)),
-        'upper_cotes':
-        list(f'{nodes}, {cotes}' for nodes, cotes in get_all_cs(graph)),
-        'maximun_lower_cotes':
-        list(f'{nodes}, {cotes}' for nodes, cotes in get_all_mci(graph)),
-        'minimum_upper_cotes':
-        list(f'{nodes}, {cotes}' for nodes, cotes in get_all_mcs(graph)),
+        'is_lattice':
+        lattice,
+        'lattice_is_bounded':
+        is_bounded(hasse_graph),
+        'maximum':
+        get_bounded(hasse_graph)[1],
+        'minimum':
+        get_bounded(hasse_graph)[0],
+        'lattice_is_complemented':
+        is_complemented(hasse_graph),
+        'complements':
+        get_complements(hasse_graph),
+        'is_boolean_algebra':
+        is_booblean_algebra(hasse_graph),
+        'is_distributed': is_distributed(hasse_graph),
+        'lower_bounds':
+        list(
+            set(f'{nodes}, {bounds}'
+                for nodes, bounds in get_all_ci(hasse_graph))),
+        'upper_bounds':
+        list(
+            set(f'{nodes}, {bounds}'
+                for nodes, bounds in get_all_cs(hasse_graph))),
+        'maximun_lower_bounds':
+        list(
+            set(f'{nodes}, {bounds}'
+                for nodes, bounds in get_all_mci(hasse_graph))),
+        'minimum_upper_bounds':
+        list(
+            set(f'{nodes}, {bounds}'
+                for nodes, bounds in get_all_mcs(hasse_graph))),
     }
 
     with open('report.yaml', 'w') as streamer:
