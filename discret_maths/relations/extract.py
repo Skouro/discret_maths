@@ -1,6 +1,7 @@
 # Standar import
 from typing import (
     Any,
+    Dict,
     Iterator,
     List,
     Optional,
@@ -14,6 +15,7 @@ from contextlib import suppress
 from networkx import DiGraph
 from networkx.algorithms.shortest_paths.generic import all_shortest_paths
 from networkx.exception import NetworkXNoPath
+import networkx as nx
 
 # Local import
 from discret_maths.relations import check
@@ -127,7 +129,7 @@ def _recursive_adj(graph: DiGraph, node: Any) -> Iterator[Any]:
 
 
 def get_avg_lent_paths(paths: Tuple[List[Any], ...]) -> float:
-    lengths = (len(path) for path in paths)
+    lengths = tuple(len(path) for path in paths)
     return sum(lengths) / len(paths)
 
 
@@ -240,8 +242,8 @@ def get_all_mcs(graph: DiGraph) -> Iterator[Tuple[Set[Any], Any]]:
 def get_mci(graph: DiGraph, node_x: Any, node_y: Any) -> Optional[Any]:
     # maxima cuota inferior
 
-    cotes = _get_mci(graph, node_x, node_y)
-    if not cotes:
+    bounds = _get_mci(graph, node_x, node_y)
+    if not bounds:
         LOGGER.warning(
             'nodes %s and %s have no maximum lower cote',
             node_x,
@@ -249,22 +251,22 @@ def get_mci(graph: DiGraph, node_x: Any, node_y: Any) -> Optional[Any]:
         )
         return None
 
-    if len(cotes) > 1:
+    if len(bounds) > 1:
         LOGGER.warning(
             'nodes %s and %s have more than one maximum lower cote: %s',
             node_x,
             node_y,
-            cotes,
+            bounds,
         )
         return None
 
-    return cotes.pop()
+    return bounds.pop()
 
 
 def get_mcs(graph: DiGraph, node_x: Any, node_y: Any) -> Optional[Any]:
     # minima cuota superior
-    cotes = _get_mcs(graph, node_x, node_y)
-    if not cotes:
+    bounds = _get_mcs(graph, node_x, node_y)
+    if not bounds:
         LOGGER.warning(
             'nodes %s and %s have no upper minimum quota',
             node_x,
@@ -272,13 +274,50 @@ def get_mcs(graph: DiGraph, node_x: Any, node_y: Any) -> Optional[Any]:
         )
         return None
 
-    if len(cotes) > 1:
+    if len(bounds) > 1:
         LOGGER.warning(
             'nodes %s and %s has more than one higher minimum quota: %s',
             node_x,
             node_y,
-            cotes,
+            bounds,
         )
         return None
 
-    return cotes.pop()
+    return bounds.pop()
+
+
+def get_bounded(graph: DiGraph) -> Tuple[Any, Any]:
+    first = None
+    last = None
+    for node in graph.nodes:
+        if not nx.ancestors(graph, node):
+            first = node
+            break
+
+    for node in graph.nodes:
+        if not graph.adj[node]:
+            last = node
+            break
+
+    return (first, last)
+
+
+def get_complement(graph: DiGraph, node: Any) -> Optional[Any]:
+    minimum, maximum = get_bounded(graph)
+
+    for _node in graph.nodes:
+        if node == _node:
+            continue
+        mcs = get_mcs(graph, node, _node)
+        mci = get_mci(graph, node, _node)
+        if mcs == maximum and mci == minimum:
+            return _node
+
+    LOGGER.info(" %s + %s = %s", node, _node, mcs)
+    LOGGER.info(" %s . %s = %s", node, _node, mci)
+
+    return None
+
+
+def get_complements(graph: DiGraph) -> Dict[Any, Optional[Any]]:
+    return {node: get_complement(graph, node) for node in graph.nodes}
